@@ -1,0 +1,31 @@
+#!/usr/bin/python
+import os
+import boto.ec2
+from optparse import OptionParser
+
+def get_instance_list(group_name):
+    conn = boto.ec2.connect_to_region(os.environ['aws_region'], aws_access_key_id=os.environ['aws_access_key_id'],aws_secret_access_key=os.environ['aws_access_secret_key'])
+    reservations = conn.get_all_instances(filters={'tag-key':'Group', 'tag-value': group_name})
+    instances = []
+    for reservation in reservations:
+        for instance in reservation.instances:
+            if "Name" in instance.tags:
+                instances.append(instance.tags["Name"])
+    return instances
+
+def create_parser():
+    parser = OptionParser()
+    parser.add_option("-g" , "--group", dest="group", help="group name", default=None)
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    (option, args) = create_parser()
+    group = option.group
+    instances = get_instance_list(group)   
+    for instance in instances:
+        if len(args) > 0:
+            print instance + " " + (" ".join(args))
+        else:
+            print instance
+
+
